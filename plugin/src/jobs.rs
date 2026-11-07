@@ -54,7 +54,7 @@ fn take<R: Runtime>(app: &AppHandle<R>, id: u32) -> Option<Job> {
 pub fn start<R: Runtime>(app: &AppHandle<R>, job: &DownloadJob, channel: Channel<JobEvent>) -> Result<u32, String> {
   let ffmpeg = crate::sidecar::bundled(app, "ffmpeg").map(|p| p.to_string_lossy().into_owned());
   let args = download::download_args(job, ffmpeg.as_deref())?;
-  let (mut rx, child) = crate::sidecar::command(app, "yt-dlp")
+  let (mut rx, child) = crate::sidecar::yt_dlp(app)
     .args(args)
     // Job object (Windows) / process group (Unix): kill() takes down the
     // PyInstaller onefile child and yt-dlp's ffmpeg too, not just the parent.

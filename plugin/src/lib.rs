@@ -25,7 +25,7 @@ fn ping(value: String) -> String {
 /// show it. Host contract: a `yt-dlp` sidecar + the shell plugin registered.
 #[tauri::command]
 async fn fetch_metadata<R: Runtime>(app: AppHandle<R>, url: String) -> Result<metadata::Metadata, String> {
-  let out = sidecar::command(&app, "yt-dlp")
+  let out = sidecar::yt_dlp(&app)
     .args(metadata::metadata_args(&url))
     .output()
     .await

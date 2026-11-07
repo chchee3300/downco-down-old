@@ -33,6 +33,20 @@ pub fn command<R: Runtime>(app: &AppHandle<R>, name: &str) -> Command {
   app.shell().command(bundled(app, name).unwrap_or_else(|| name.into())).env("PYTHONIOENCODING", "utf-8")
 }
 
+/// yt-dlp with Deno for YouTube's JavaScript challenges when the app has its
+/// own copy (`engines/deno/`, installed from Settings' "Third-party
+/// software"); a Deno on PATH yt-dlp finds by itself. Downloader-only (the
+/// converter's sidecar.rs has no yt-dlp).
+pub fn yt_dlp<R: Runtime>(app: &AppHandle<R>) -> Command {
+  let deno = app.path().app_local_data_dir().ok().and_then(|d| find("deno", [Some(d.join("engines").join("deno"))]));
+  command(app, "yt-dlp").args(js_runtime_args(deno.as_deref()))
+}
+
+/// `--js-runtimes deno:<path>` for `deno`, nothing without it.
+pub fn js_runtime_args(deno: Option<&Path>) -> Vec<String> {
+  deno.map(|d| vec!["--js-runtimes".into(), format!("deno:{}", d.display())]).unwrap_or_default()
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -57,6 +71,12 @@ mod tests {
     // Not in the resource dir (macOS: externalBin is next to the exe).
     let yt = format!("yt-dlp{}", std::env::consts::EXE_SUFFIX);
     assert_eq!(find("yt-dlp", [Some(res), Some(exe.clone())]), Some(exe.join(yt)));
+  }
+
+  #[test]
+  fn deno_is_passed_to_yt_dlp_only_when_present() {
+    assert!(js_runtime_args(None).is_empty());
+    assert_eq!(js_runtime_args(Some(Path::new("C:/a b/deno.exe"))), ["--js-runtimes", "deno:C:/a b/deno.exe"]);
   }
 
   #[test]
