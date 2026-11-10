@@ -1,6 +1,6 @@
 # Claude 自動化測試指引 (sorai-toolkit-downloader)
 
-這是 SORAI Toolkit 的 **Downloader 子 repo**（yt-dlp 圖形化介面），本身是一個 Tauri v2 plugin，跟 `sorai-toolkit-converter` 一樣被 `sorai-toolkit` hub 當成 npm git dependency 消費。同一個套件帶兩半：
+這是 downco（2.2.0 以前叫 SORAI Toolkit；GitHub repo `chchee3300/downco-down`，本機資料夾與 npm 套件名沒改）的 **Downloader 子 repo**（yt-dlp 圖形化介面），本身是一個 Tauri v2 plugin，跟 `sorai-toolkit-converter` 一樣被 `sorai-toolkit` hub 當成 npm git dependency 消費。同一個套件帶兩半：
 - `plugin/`：Rust crate `tauri-plugin-sorai-downloader`（plugin 名 `sorai-downloader`，常數 `NAME`）。指令：`ping`（hub 冒煙測試用）、`fetch_metadata`、`start_download`、`cancel_download`。
 - `src/`：React UI。`vite.lib.config.mjs` 產生 `dist/index.js`，`src/index.js` 匯出 `{ DownloaderApp }` 和 `src/plugin.js` 的 invoke 包裝。`prepare` script 在 `npm install` 時自動建置。
 
