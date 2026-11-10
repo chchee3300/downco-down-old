@@ -1,43 +1,40 @@
-# sorai-toolkit-downloader
+# downco-down
 
-The **Downloader tool** for [downco](https://github.com/chchee3300/downco) — paste a video URL, pick a format, download it locally, no upload, no cloud processing. This repo is consumed by the [`downco`](https://github.com/chchee3300/downco) hub repo as an npm git dependency; it is **not** independently installable or shippable — the hub is the actual installable app.
+The Downloader in [downco](https://github.com/chchee3300/downco), a desktop app that downloads and converts media on your own computer. To use the Downloader, [install downco](https://github.com/chchee3300/downco#install). This repository holds its source and isn't an app by itself.
 
-## Features
+## What it does
 
-- Paste a URL, get back title/channel/duration/thumbnail plus every available video and audio format (via `yt-dlp -j`).
-- Batch queue — add multiple videos, each with its own format selection, and download them one after another with a live progress bar per item.
-- Pick a video-only format and an audio-only format independently ("split" mode) — they're merged into one file behind the scenes via `--ffmpeg-location`. Sources that only ever offer a single already-muxed stream (Twitch clips, most Twitter/X videos) skip straight to "combined" mode with nothing to merge.
-- Clip a video to a start/end range before downloading (`ClipModal.jsx`) — same dual-thumb drag-slider UI as Converter's Trim modal. Falls back to a static thumbnail + timeline when no playable preview stream is available (common for Twitch/X's HLS-only sources).
-- Recognizes YouTube, Twitch, and X (Twitter) with a platform badge on each queue row — any other site yt-dlp supports still works, just shown as a generic "Video" badge instead of being rejected.
+- Paste a link to see the title, channel, length and thumbnail, then pick the video quality and the audio quality from the formats the site offers.
+- Download several videos in a queue, each with its own settings and progress bar. Removing a video from the queue cancels only that download.
+- Merge the chosen video and audio into one MP4, or save them as two separate files. Sources that only offer one combined stream, such as Twitch clips and most videos on X, are downloaded as they are.
+- Clip a video to a start and end time before downloading, with a preview player when the site provides a direct video link.
+- YouTube, Twitch and X get a badge in the queue. Any other site supported by [yt-dlp](https://github.com/yt-dlp/yt-dlp) also works.
 
-## How it works
+[yt-dlp](https://github.com/yt-dlp/yt-dlp) does the downloading, and the ffmpeg bundled with downco merges the streams. YouTube offers yt-dlp all of its formats only when a JavaScript runtime is available. If [Deno](https://deno.com/) is installed through downco's Settings → Third-party software, the Downloader passes it to yt-dlp.
 
-This repo is a [Tauri v2](https://tauri.app/) plugin in two halves, shipped together in one npm git dependency:
+Downloading is subject to each site's terms of service. Only download videos you have the right to keep, such as your own uploads or openly licensed content.
 
-- **Rust crate** (`plugin/`, `tauri-plugin-sorai-downloader`) — runs `yt-dlp -j` and classifies its formats, builds the download arguments (format selector, merge, clip sections, progress template), parses progress, and runs/cancels the download processes.
-- **React UI** (`src/`, library build `vite.lib.config.mjs` → `dist/index.js`) — exports `{ DownloaderApp }` plus the plugin's `invoke` wrappers (`src/plugin.js`). React and `@tauri-apps/api` are peer dependencies; no CSS is bundled (the hub loads the shared stylesheet). `dist/` is built by the `prepare` script whenever this repo is installed as a git dependency.
+## How it's built
 
-The host app (the hub) registers the plugin, grants `sorai-downloader:default`, registers `tauri-plugin-shell`, and provides:
+The repository is a [Tauri v2](https://tauri.app/) plugin in two parts, installed together as one npm package (`sorai-toolkit-downloader`):
 
-- [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) and [`ffmpeg`](https://ffmpeg.org/) in its resource dir or next to its exe (yt-dlp merges separate video/audio streams with that ffmpeg via `--ffmpeg-location`);
-- the UI runtime globals `window.LiquidSelect`, `window.EstellaLib.i18n` and `window.SoraiDialogs`.
+- `plugin/` is the Rust crate `tauri-plugin-sorai-downloader`. It runs `yt-dlp -j` and sorts the formats, builds the download command (format selection, merging, clip range), reads progress, and runs and cancels downloads.
+- `src/` is the React UI. Its library build (`vite.lib.config.mjs`) writes `dist/index.js`, which exports `DownloaderApp` and the plugin's command wrappers. npm runs the build through the `prepare` script when downco installs the package. React and `@tauri-apps/api` are peer dependencies, and the stylesheet lives in downco's `resources/styles.css`.
 
-There is no standalone app in this repo — the UI needs the hub's Tauri runtime. Develop it through the hub's `npm run tauri:dev`, which picks up a sibling checkout of this repo (`src/` hot-reloads, `plugin/` edits rebuild the app).
+The UI only works inside downco's Tauri runtime. To work on it, check this repository out next to downco as `sorai-toolkit-downloader` and run `npm run tauri:dev` in downco. Changes to `src/` reload in place, and changes to `plugin/` rebuild and restart the app.
 
-**A note on legality**: yt-dlp's own license (Unlicense) places no restriction on its use, but the site you're downloading *from* may have its own Terms of Service restricting video downloads — that's a separate concern from open-source licensing. Use this tool for content you have the right to download (personal backups, your own uploads, permissively-licensed content, etc.).
-
-## Testing
+## Tests
 
 ```bash
-cd plugin && cargo test          # metadata parsing (YouTube/Twitch/X fixtures), argv, progress, sidecar lookup
+cd plugin && cargo test
 ```
 
-End-to-end metadata fetches and real downloads (including a deliberately video-only format, checked for both a video and an audio stream) run from the hub: `npm run test:e2e -- downloader` there.
+These cover format parsing (with saved YouTube, Twitch and X responses), the download command, progress parsing and finding the bundled programs. End-to-end tests run in downco with real downloads and need a network connection: `npm run test:e2e -- downloader`.
 
-## Versioning
+## Versions
 
-This repo has no independent release pipeline — no semantic-release, no CHANGELOG, no GitHub Releases. Versioning and packaging both live in the [`downco`](https://github.com/chchee3300/downco) hub repo, which consumes this repo via a git ref. Commit messages here don't need Conventional Commits prefixes.
+This repository has no releases of its own. downco pins a commit of it in `package-lock.json` and ships it as part of each downco release, so commit messages here don't need Conventional Commits prefixes.
 
 ## License
 
-[MIT](LICENSE) for this repo's own code. Bundled/invoked third-party tools (yt-dlp, ffmpeg) keep their own licenses — see the hub repo's [`THIRD-PARTY-LICENSES.md`](https://github.com/chchee3300/downco/blob/master/THIRD-PARTY-LICENSES.md) for details, since the hub is what actually bundles and ships them.
+[MIT](LICENSE). yt-dlp and ffmpeg keep their own licenses: see downco's [`THIRD-PARTY-LICENSES.md`](https://github.com/chchee3300/downco/blob/master/THIRD-PARTY-LICENSES.md).
