@@ -1,6 +1,6 @@
 # downco-down
 
-The Downloader in [downco](https://github.com/chchee3300/downco), a desktop app that downloads and converts media on your own computer. To use the Downloader, [install downco](https://github.com/chchee3300/downco#install). This repository holds its source and isn't an app by itself.
+The Downloader in [downco](https://github.com/chchee3300/downco), a Windows app that downloads and converts media on your own computer. To use the Downloader, [install downco](https://github.com/chchee3300/downco#install). This repository holds its source and isn't an app by itself.
 
 ## What it does
 
